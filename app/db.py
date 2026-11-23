@@ -5,7 +5,7 @@ from fastapi import Request
 import psycopg
 
 # Function to get a database connection from the FastAPI request object. It retrieves the database URL from the application state and establishes a connection using psycopg. The function yields the connection, allowing it to be used within a context manager, and ensures that the connection is properly closed after use.
-def get_conn(request: Request) -> Generator[psycopg.Connection, None, None]:
+def get_db(request: Request) -> Generator[psycopg.Connection, None, None]:
     db_url: str = request.app.state.database_url
     with psycopg.connect(db_url) as conn:
         yield conn
