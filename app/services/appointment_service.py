@@ -6,6 +6,10 @@ from app.repositories import appointment_repo
 from app.schemas import AppointmentStatus
 from app.services import clinic_service, patient_service
 
+ClinicId = str
+DoctorId = str
+PatientId = str
+
 _ALLOWED_TRANSITIONS: dict[AppointmentStatus, set[AppointmentStatus]] = {
     AppointmentStatus.BOOKED: {
         AppointmentStatus.CHECKED_IN,
@@ -25,9 +29,9 @@ _ALLOWED_TRANSITIONS: dict[AppointmentStatus, set[AppointmentStatus]] = {
 def book_appointment(
     conn: psycopg.Connection,
     *,
-    clinic_id: UUID,
-    doctor_id: UUID,
-    patient_id: UUID,
+    clinic_id: ClinicId,
+    doctor_id: DoctorId,
+    patient_id: PatientId,
     scheduled_at: datetime,
     duration_min: int,
     notes: str | None = None,
@@ -72,9 +76,9 @@ def get_appointment(conn: psycopg.Connection, appointment_id: UUID) -> dict:
 def list_appointments(
     conn: psycopg.Connection,
     *,
-    clinic_id: UUID | None = None,
-    doctor_id: UUID | None = None,
-    patient_id: UUID | None = None,
+    clinic_id: ClinicId | None = None,
+    doctor_id: DoctorId | None = None,
+    patient_id: PatientId | None = None,
     status: AppointmentStatus | None = None,
 ) -> list[dict]:
     if clinic_id is not None:

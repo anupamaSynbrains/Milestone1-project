@@ -9,6 +9,9 @@ from app.schemas import (
     AppointmentResponse,
     AppointmentStatus,
     AppointmentStatusUpdate,
+    ClinicId,
+    DoctorId,
+    PatientId,
 )
 from app.services import appointment_service
 
@@ -33,9 +36,9 @@ def book_appointment(
 
 @router.get("", response_model=list[AppointmentResponse])
 def list_appointments(
-    clinic_id: UUID | None = Query(default=None),
-    doctor_id: UUID | None = Query(default=None),
-    patient_id: UUID | None = Query(default=None),
+    clinic_id: ClinicId | None = Query(default=None),
+    doctor_id: DoctorId | None = Query(default=None),
+    patient_id: PatientId | None = Query(default=None),
     status_filter: AppointmentStatus | None = Query(default=None, alias="status"),
     conn: psycopg.Connection = Depends(get_db),
 ) -> list[dict]:

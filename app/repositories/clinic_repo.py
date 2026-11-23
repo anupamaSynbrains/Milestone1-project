@@ -1,6 +1,9 @@
-from uuid import UUID
 import psycopg
 from psycopg.rows import dict_row
+
+
+ClinicId = str
+DoctorId = str
 
 
 def list_clinics(conn: psycopg.Connection) -> list[dict]:
@@ -15,7 +18,7 @@ def list_clinics(conn: psycopg.Connection) -> list[dict]:
     return list(rows)
 
 
-def get_clinic_by_id(conn: psycopg.Connection, clinic_id: UUID) -> dict | None:
+def get_clinic_by_id(conn: psycopg.Connection, clinic_id: ClinicId) -> dict | None:
     with conn.cursor(row_factory=dict_row) as cur:
         return cur.execute(
             """
@@ -39,7 +42,7 @@ def get_clinic_by_code(conn: psycopg.Connection, code: str) -> dict | None:
         ).fetchone()
 
 
-def list_doctors(conn: psycopg.Connection, clinic_id: UUID | None = None) -> list[dict]:
+def list_doctors(conn: psycopg.Connection, clinic_id: ClinicId | None = None) -> list[dict]:
     with conn.cursor(row_factory=dict_row) as cur:
         if clinic_id is not None:
             rows = cur.execute(
@@ -62,7 +65,7 @@ def list_doctors(conn: psycopg.Connection, clinic_id: UUID | None = None) -> lis
     return list(rows)
 
 
-def get_doctor_by_id(conn: psycopg.Connection, doctor_id: UUID) -> dict | None:
+def get_doctor_by_id(conn: psycopg.Connection, doctor_id: DoctorId) -> dict | None:
     with conn.cursor(row_factory=dict_row) as cur:
         return cur.execute(
             """

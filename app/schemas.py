@@ -1,7 +1,12 @@
 from datetime import date, datetime
 from enum import Enum
+from typing import Annotated
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
+
+ClinicId = Annotated[str, Field(pattern=r"^cl[0-9]+$")]
+DoctorId = Annotated[str, Field(pattern=r"^dr[0-9]+$")]
+PatientId = Annotated[str, Field(pattern=r"^pt[0-9]+$")]
 
 #validates the data for the API endpoints and defines the data models used in the application.
 #shapes the outgoing responses for the API endpoints and ensures that the data returned to the client is in the expected format.
@@ -21,7 +26,7 @@ class AppointmentStatus(str, Enum):
 class ClinicResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
+    id: ClinicId
     code: str
     name: str
     city: str
@@ -31,8 +36,8 @@ class ClinicResponse(BaseModel):
 class DoctorResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
-    clinic_id: UUID
+    id: DoctorId
+    clinic_id: ClinicId
     code: str
     full_name: str
     specialty: str
@@ -41,7 +46,7 @@ class DoctorResponse(BaseModel):
 # --- Patients ---
 
 class PatientCreate(BaseModel):
-    clinic_id: UUID
+    clinic_id: ClinicId
     patient_ref: str = Field(min_length=1, max_length=64)
     full_name: str = Field(min_length=1, max_length=120)
     phone: str = Field(min_length=5, max_length=32)
@@ -51,8 +56,8 @@ class PatientCreate(BaseModel):
 class PatientResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
-    clinic_id: UUID
+    id: PatientId
+    clinic_id: ClinicId
     patient_ref: str
     full_name: str
     phone: str
@@ -63,9 +68,9 @@ class PatientResponse(BaseModel):
 # --- Appointments ---
 
 class AppointmentCreate(BaseModel):
-    clinic_id: UUID
-    doctor_id: UUID
-    patient_id: UUID
+    clinic_id: ClinicId
+    doctor_id: DoctorId
+    patient_id: PatientId
     scheduled_at: datetime
     duration_min: int = Field(default=15, ge=5, le=240)
     notes: str | None = Field(default=None, max_length=1000)
@@ -88,9 +93,9 @@ class AppointmentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    clinic_id: UUID
-    doctor_id: UUID
-    patient_id: UUID
+    clinic_id: ClinicId
+    doctor_id: DoctorId
+    patient_id: PatientId
     scheduled_at: datetime
     duration_min: int
     slot_end: datetime

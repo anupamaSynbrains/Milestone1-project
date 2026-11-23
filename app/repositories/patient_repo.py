@@ -1,13 +1,16 @@
 from datetime import date
-from uuid import UUID
 import psycopg
 from psycopg.rows import dict_row
+
+
+ClinicId = str
+PatientId = str
 
 
 def create_patient(
     conn: psycopg.Connection,
     *,
-    clinic_id: UUID,
+    clinic_id: ClinicId,
     patient_ref: str,
     full_name: str,
     phone: str,
@@ -25,7 +28,7 @@ def create_patient(
     return dict(row)
 
 
-def get_patient_by_id(conn: psycopg.Connection, patient_id: UUID) -> dict | None:
+def get_patient_by_id(conn: psycopg.Connection, patient_id: PatientId) -> dict | None:
     with conn.cursor(row_factory=dict_row) as cur:
         return cur.execute(
             """
@@ -39,7 +42,7 @@ def get_patient_by_id(conn: psycopg.Connection, patient_id: UUID) -> dict | None
 
 def get_patient_by_ref(
     conn: psycopg.Connection,
-    clinic_id: UUID,
+    clinic_id: ClinicId,
     patient_ref: str,
 ) -> dict | None:
     with conn.cursor(row_factory=dict_row) as cur:
@@ -53,7 +56,7 @@ def get_patient_by_ref(
         ).fetchone()
 
 
-def list_patients(conn: psycopg.Connection, clinic_id: UUID | None = None) -> list[dict]:
+def list_patients(conn: psycopg.Connection, clinic_id: ClinicId | None = None) -> list[dict]:
     with conn.cursor(row_factory=dict_row) as cur:
         if clinic_id is not None:
             rows = cur.execute(

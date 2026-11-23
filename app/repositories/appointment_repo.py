@@ -3,6 +3,10 @@ from uuid import UUID
 import psycopg
 from psycopg.rows import dict_row
 
+ClinicId = str
+DoctorId = str
+PatientId = str
+
 _APPOINTMENT_COLUMNS = """
     id,
     clinic_id,
@@ -23,9 +27,9 @@ _APPOINTMENT_COLUMNS = """
 def create_appointment(
     conn: psycopg.Connection,
     *,
-    clinic_id: UUID,
-    doctor_id: UUID,
-    patient_id: UUID,
+    clinic_id: ClinicId,
+    doctor_id: DoctorId,
+    patient_id: PatientId,
     scheduled_at: datetime,
     duration_min: int,
     notes: str | None = None,
@@ -82,9 +86,9 @@ def get_appointment_by_id(conn: psycopg.Connection, appointment_id: UUID) -> dic
 def list_appointments(
     conn: psycopg.Connection,
     *,
-    clinic_id: UUID | None = None,
-    doctor_id: UUID | None = None,
-    patient_id: UUID | None = None,
+    clinic_id: ClinicId | None = None,
+    doctor_id: DoctorId | None = None,
+    patient_id: PatientId | None = None,
     status: str | None = None,
 ) -> list[dict]:
     clauses: list[str] = []
