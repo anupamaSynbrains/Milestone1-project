@@ -32,7 +32,7 @@ def list_patients(
 
 @router.get("/{patient_id}", response_model=PatientDetailResponse)
 def get_patient(
-    patient_id: UUID,
+    patient_id: PatientId,
     conn: psycopg.Connection = Depends(get_db),
 ) -> dict:
     return patient_service.get_patient_with_appointments(conn, patient_id)

@@ -1,7 +1,9 @@
 from datetime import datetime
 from uuid import UUID
+
 import psycopg
-from app.errors import NotFoundError, RuleViolationError
+
+from app.errors import ConflictError, NotFoundError, RuleViolationError
 from app.repositories import appointment_repo
 from app.schemas import AppointmentStatus
 from app.services import clinic_service, patient_service
@@ -24,6 +26,14 @@ _ALLOWED_TRANSITIONS: dict[AppointmentStatus, set[AppointmentStatus]] = {
     AppointmentStatus.CANCELLED: set(),
     AppointmentStatus.NO_SHOW: set(),
 }
+
+
+def _concurrent_update_error() -> ConflictError:
+    """Raised when another request changed the appointment between our read and our write."""
+    return ConflictError(
+        "Appointment was changed by another request; reload and try again.",
+        code="CONCURRENT_UPDATE",
+    )
 
 
 def book_appointment(
@@ -52,6 +62,7 @@ def book_appointment(
             code="PATIENT_CLINIC_MISMATCH",
         )
 
+    # Double-booking is blocked by the database exclusion constraint (23P01 -> 409).
     return appointment_repo.create_appointment(
         conn,
         clinic_id=clinic_id,
@@ -114,8 +125,9 @@ def reschedule_appointment(
         )
 
     next_duration = duration_min if duration_min is not None else existing["duration_min"]
-    next_count = existing["reschedule_count"] + 1
 
+    # The repository adds 1 to reschedule_count in SQL and only updates
+    # if the status is still the one we read (WHERE id=%s AND status=%s).
     updated = appointment_repo.update_appointment_schedule(
         conn,
         appointment_id=appointment_id,
@@ -124,10 +136,7 @@ def reschedule_appointment(
         duration_min=next_duration,
     )
     if updated is None:
-        raise ConflictError(
-            "Appointment was changed by another request; reload and try again.",
-            code="CONCURRENT_UPDATE",
-        )
+        raise _concurrent_update_error()
     return updated
 
 
@@ -149,14 +158,12 @@ def cancel_appointment(
     updated = appointment_repo.update_appointment_status(
         conn,
         appointment_id=appointment_id,
+        expected_status=current_status.value,
         status=AppointmentStatus.CANCELLED.value,
         cancel_reason=reason,
     )
     if updated is None:
-        raise NotFoundError(
-            f"Appointment '{appointment_id}' not found.",
-            code="APPOINTMENT_NOT_FOUND",
-        )
+        raise _concurrent_update_error()
     return updated
 
 
@@ -176,7 +183,7 @@ def update_appointment_status(
     current_status = AppointmentStatus(existing["status"])
 
     if current_status == target_status:
-        return existing
+        return existing  # already in that status: nothing to do
 
     if target_status not in _ALLOWED_TRANSITIONS[current_status]:
         raise RuleViolationError(
@@ -184,16 +191,13 @@ def update_appointment_status(
             code="INVALID_STATUS_TRANSITION",
         )
 
-    cancel_reason = existing["cancel_reason"] if current_status == AppointmentStatus.CANCELLED else None
     updated = appointment_repo.update_appointment_status(
         conn,
         appointment_id=appointment_id,
+        expected_status=current_status.value,
         status=target_status.value,
-        cancel_reason=cancel_reason,
+        cancel_reason=None,
     )
     if updated is None:
-        raise NotFoundError(
-            f"Appointment '{appointment_id}' not found.",
-            code="APPOINTMENT_NOT_FOUND",
-        )
+        raise _concurrent_update_error()
     return updated
