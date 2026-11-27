@@ -34,6 +34,14 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"error": {"code": exc.code, "message": exc.message}},
         )
 
+    @app.exception_handler(Exception)
+    async def handle_unexpected_error(_request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=500,
+        content={"error": {"code": "INTERNAL_ERROR", "message": "An unexpected error occurred."}},
+    )
+    
+
     @app.exception_handler(psycopg.Error)
     async def handle_psycopg_error(_request: Request, exc: psycopg.Error) -> JSONResponse:
         sqlstate = getattr(exc, "sqlstate", None)

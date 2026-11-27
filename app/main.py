@@ -7,6 +7,8 @@ from app.errors import register_exception_handlers
 from app.routers import appointments, clinics, patients
 
 
+app.state.app_timezone = settings.app_timezone
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()

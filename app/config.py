@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import os
 from dotenv import load_dotenv
 
+app_timezone: str = "Asia/Kolkata"
+
 load_dotenv()
 
 # dataclass to hold the application settings and help with type checking and immutability.

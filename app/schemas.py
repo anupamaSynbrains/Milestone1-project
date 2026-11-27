@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Annotated
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ClinicId = Annotated[str, Field(pattern=r"^cl[0-9]+$")]
 DoctorId = Annotated[str, Field(pattern=r"^dr[0-9]+$")]
@@ -51,6 +51,13 @@ class PatientCreate(BaseModel):
     full_name: str = Field(min_length=1, max_length=120)
     phone: str = Field(min_length=5, max_length=32)
     date_of_birth: date
+
+    @field_validator("date_of_birth")
+    @classmethod
+    def check_date_of_birth(cls, value: date) -> date:
+        if value > date.today():
+            raise ValueError("date_of_birth cannot be in the future")
+        return value
 
 
 class PatientResponse(BaseModel):
