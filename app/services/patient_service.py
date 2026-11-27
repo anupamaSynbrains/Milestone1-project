@@ -1,7 +1,8 @@
 from datetime import date
+from uuid import UUID
 import psycopg
 from app.errors import ConflictError, NotFoundError
-from app.repositories import patient_repo
+from app.repositories import appointment_repo, patient_repo
 from app.services import clinic_service
 
 ClinicId = str
@@ -47,3 +48,12 @@ def list_patients(conn: psycopg.Connection, clinic_id: ClinicId | None = None) -
     if clinic_id is not None:
         clinic_service.get_clinic(conn, clinic_id)
     return patient_repo.list_patients(conn, clinic_id=clinic_id)
+
+
+def get_patient_with_appointments(conn: psycopg.Connection, patient_id: UUID) -> dict:
+    patient = get_patient(conn, patient_id)
+    appointments = appointment_repo.list_appointments(conn, patient_id=patient_id)
+    return {
+        **patient,
+        "appointments": appointments,
+    }

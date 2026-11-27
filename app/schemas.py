@@ -64,6 +64,9 @@ class PatientResponse(BaseModel):
     date_of_birth: date
     created_at: datetime
 
+class PatientDetailResponse(PatientResponse):
+    appointments: list[AppointmentResponse] = Field(default_factory=list)
+
 
 # --- Appointments ---
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 import psycopg
 from app.db import get_db
-from app.schemas import ClinicId, PatientCreate, PatientId, PatientResponse
+from app.schemas import PatientCreate,ClinicId,PatientId, PatientDetailResponse, PatientResponse
 from app.services import patient_service
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
@@ -30,9 +30,9 @@ def list_patients(
     return patient_service.list_patients(conn, clinic_id=clinic_id)
 
 
-@router.get("/{patient_id}", response_model=PatientResponse)
+@router.get("/{patient_id}", response_model=PatientDetailResponse)
 def get_patient(
-    patient_id: PatientId,
+    patient_id: UUID,
     conn: psycopg.Connection = Depends(get_db),
 ) -> dict:
-    return patient_service.get_patient(conn, patient_id)
+    return patient_service.get_patient_with_appointments(conn, patient_id)
