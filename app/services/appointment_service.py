@@ -119,14 +119,14 @@ def reschedule_appointment(
     updated = appointment_repo.update_appointment_schedule(
         conn,
         appointment_id=appointment_id,
+        expected_status=current_status.value,
         scheduled_at=scheduled_at,
         duration_min=next_duration,
-        reschedule_count=next_count,
     )
     if updated is None:
-        raise NotFoundError(
-            f"Appointment '{appointment_id}' not found.",
-            code="APPOINTMENT_NOT_FOUND",
+        raise ConflictError(
+            "Appointment was changed by another request; reload and try again.",
+            code="CONCURRENT_UPDATE",
         )
     return updated
 

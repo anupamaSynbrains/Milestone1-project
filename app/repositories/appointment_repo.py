@@ -126,9 +126,9 @@ def update_appointment_schedule(
     conn: psycopg.Connection,
     *,
     appointment_id: UUID,
+    expected_status: str,
     scheduled_at: datetime,
     duration_min: int,
-    reschedule_count: int,
 ) -> dict | None:
     with conn.cursor(row_factory=dict_row) as cur:
         row = cur.execute(
@@ -138,9 +138,10 @@ def update_appointment_schedule(
                 scheduled_at = %s,
                 duration_min = %s,
                 slot_end = %s + make_interval(mins => %s),
-                reschedule_count = %s,
+                reschedule_count = reschedule_count + 1,
                 updated_at = now()
             WHERE id = %s
+              AND status = %s
             RETURNING {_APPOINTMENT_COLUMNS}
             """,
             (
@@ -148,8 +149,8 @@ def update_appointment_schedule(
                 duration_min,
                 scheduled_at,
                 duration_min,
-                reschedule_count,
                 appointment_id,
+                expected_status,
             ),
         ).fetchone()
     return dict(row) if row is not None else None
@@ -159,6 +160,7 @@ def update_appointment_status(
     conn: psycopg.Connection,
     *,
     appointment_id: UUID,
+    expected_status: str,
     status: str,
     cancel_reason: str | None = None,
 ) -> dict | None:
@@ -171,8 +173,9 @@ def update_appointment_status(
                 cancel_reason = %s,
                 updated_at = now()
             WHERE id = %s
+              AND status = %s
             RETURNING {_APPOINTMENT_COLUMNS}
             """,
-            (status, cancel_reason, appointment_id),
+            (status, cancel_reason, appointment_id, expected_status),
         ).fetchone()
     return dict(row) if row is not None else None
